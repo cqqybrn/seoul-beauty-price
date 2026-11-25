@@ -1,5 +1,6 @@
 # 首尔价研所 · Seoul Beauty Price
 
+[![CI](https://github.com/cqqybrn/seoul-beauty-price/actions/workflows/ci.yml/badge.svg)](https://github.com/cqqybrn/seoul-beauty-price/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-B02A61.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg)](pyproject.toml)
 [![Astro 7](https://img.shields.io/badge/Astro-7.4-FF5D01.svg)](web/package.json)

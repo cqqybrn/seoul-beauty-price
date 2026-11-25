@@ -83,8 +83,13 @@ def projection_hospital(**values):
 
 
 def test_summary_missing_address_not_a_conflict():
+    html = page().replace(
+        "<script>",
+        projection_hospital(address=None, addressDetail=None) + "<script>",
+        1,
+    )
     facts = YeoshinAdapter().parse_detail(
-        page() + projection_hospital(address=None, addressDetail=None),
+        html,
         "https://www.yeoshin.co.kr/event/mobile/29421",
     )
     assert "테스트로 1" in facts.clinic_address
@@ -92,9 +97,13 @@ def test_summary_missing_address_not_a_conflict():
 
 
 def test_summary_actual_address_disagreement_rejected():
+    html = page().replace(
+        "</body>",
+        projection_hospital(address="서울 강남구 다른로 2", addressDetail="5층") + "</body>",
+    )
     with pytest.raises(SourceNotReady, match="Conflicting clinic identity"):
         YeoshinAdapter().parse_detail(
-            page() + projection_hospital(address="서울 강남구 다른로 2", addressDetail="5층"),
+            html,
             "https://www.yeoshin.co.kr/event/mobile/29421",
         )
 
