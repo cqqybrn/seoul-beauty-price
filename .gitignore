@@ -1,0 +1,17 @@
+.venv/
+.bootstrap/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.env
+/data/
+/dist/
+web/dist/
+node_modules/
+.coverage
+htmlcov/
+.playwright/
+web/.astro/
+web/src/data/generated.json

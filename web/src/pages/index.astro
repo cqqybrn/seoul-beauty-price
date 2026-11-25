@@ -1,0 +1,349 @@
+---
+import Base from '../layouts/Base.astro';
+import ProcedureIcon from '../components/ProcedureIcon.astro';
+import {
+  catalog,
+  procedures,
+  krw,
+  cny,
+  cnyUnit,
+  tenThousandKrwCny,
+  trustedSample,
+  consumerTitle,
+  clinicTitle,
+  specText,
+  sourceNames,
+  unitNames,
+  conditionNames,
+} from '../data/catalog';
+
+const raw = catalog.raw_options || [];
+const clinics = new Set(raw.map(o => o.clinic_id)).size;
+const events = new Set(raw.map(o => o.event_id)).size;
+const fxSample = tenThousandKrwCny();
+
+const bucketOrder = [
+  'ulthera:single:shot',
+  'shurink:single:shot',
+  'filler:import:cc',
+  'filler:domestic:cc',
+  'rejuran:single:cc',
+];
+const bucketLabels: Record<string, { title: string; sub: string; procId: string }> = {
+  'ulthera:single:shot': { title: '美版超声刀 Ulthera', sub: '聚焦超声 · 美版原厂设备', procId: 'ulthera' },
+  'shurink:single:shot': { title: '舒立可 Shurink', sub: '韩版超声 · 独立设备核算', procId: 'shurink' },
+  'filler:import:cc': { title: '进口品牌玻尿酸', sub: '乔雅登 / 瑞蓝 / 保柔缇等', procId: 'filler' },
+  'filler:domestic:cc': { title: '韩国品牌玻尿酸', sub: '纽拉美斯 / 伊婉 / Atier等', procId: 'filler' },
+  'rejuran:single:cc': { title: '丽珠兰 Rejuran', sub: '多核苷酸肌肤修护水光', procId: 'rejuran' },
+};
+const showcaseBuckets = bucketOrder
+  .map(key => (catalog.bucket_stats || []).find(b => b.bucket_key === key))
+  .filter((b): b is NonNullable<typeof b> => Boolean(b));
+
+const index = procedures.map(p => {
+  const all = catalog.offers.filter(o => o.procedure_id === p.id);
+  const safe = [...all.filter(trustedSample)].sort((a, b) => a.price_krw - b.price_krw);
+  const sample =
+    safe[0] ||
+    all.find(o => !o.is_bundle && !o.price_from && !o.conditions.length && !o.extra_fees.length) ||
+    all.find(o => !o.is_bundle && !o.price_from) ||
+    all[0] ||
+    null;
+  return { ...p, all, sample, isSafe: sample ? safe.includes(sample) : false };
+});
+
+const reportEntries = (catalog.report?.sections || []).flatMap(s =>
+  s.entries.map(e => ({ ...e, sectionTitle: s.title === '新上架活动' ? '新入库观察' : s.title }))
+).slice(0, 4);
+---
+<Base active="home">
+  <section class="hero-section">
+    <div class="shell hero-grid">
+      <div class="hero-copy">
+        <div class="hero-pill">
+          <span class="hero-pill-badge">首尔实采</span>
+          <span>面向中国顾客的韩国轻医美公开标价参照系</span>
+        </div>
+        <h1>
+          去首尔做轻医美，<br />
+          <span class="hero-accent">先拆清规格</span>，再比真实价格。
+        </h1>
+        <p class="hero-lead">
+          将韩国医美平台活动译为清晰中文，按<strong>设备、品牌分档、发数与毫升</strong>拆算可比单价。公开标价与新客券拆开陈列，初诊限定与附加费一目了然。
+        </p>
+
+        <form class="hero-search" action="/activities/" method="get" role="search">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7.5" />
+            <path d="M20 20l-3.8-3.8" stroke-linecap="round" />
+          </svg>
+          <input
+            type="search"
+            name="q"
+            placeholder="搜中文项目、品牌或医院，如：超声刀、乔雅登、丽珠兰..."
+            aria-label="搜索中文项目、品牌或医院"
+          />
+          <button type="submit" class="btn-primary">搜索活动</button>
+        </form>
+
+        <div class="hero-quick-tags">
+          <span class="quick-label">热门直达：</span>
+          <a href="/procedures/ulthera/">美版超声刀</a>
+          <a href="/procedures/filler/">玻尿酸填充</a>
+          <a href="/procedures/botox/">肉毒素</a>
+          <a href="/procedures/shurink/">舒立可</a>
+          <a href="/procedures/rejuran/">丽珠兰</a>
+          <a href="/procedures/potenza/">黄金微针</a>
+        </div>
+      </div>
+
+      <aside class="hero-showcase" aria-label="首尔热门规格实采中位单价">
+        <div class="showcase-head">
+          <div>
+            <span class="showcase-tag">LIVE BENCHMARK</span>
+            <h2>同规格单价速览</h2>
+          </div>
+          <span class="showcase-date">{catalog.generated_at?.slice(0, 10) || '待更新'} 整理</span>
+        </div>
+
+        {showcaseBuckets.length > 0 ? (
+          <div class="showcase-rows">
+            {showcaseBuckets.map(b => {
+              const info = bucketLabels[b.bucket_key];
+              const unitKey = b.bucket_key.split(':')[2];
+              const unitLabel = unitNames[unitKey] || unitKey;
+              return (
+                <a href={`/procedures/${info.procId}/`} class="showcase-item">
+                  <div class="showcase-item-left">
+                    <strong>{info.title}</strong>
+                    <small>{info.sub} · {b.n} 条可算单价</small>
+                  </div>
+                  <div class="showcase-item-right">
+                    <span class="showcase-cny">{cnyUnit(b.median)} <em>/ {unitLabel}</em></span>
+                    <small>中位 {krw(b.median)}</small>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        ) : (
+          <div class="showcase-empty">正在等待首批实采分桶统计生成。</div>
+        )}
+
+        <div class="showcase-foot">
+          <span>基于女神门票公开含税标价计算 · 不含新客券抵扣</span>
+          <a href="/about/">计算规则 →</a>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="shell metrics-strip" aria-label="当前收录规模">
+    <div class="metric-card">
+      <span class="metric-num">{raw.length}</span>
+      <div>
+        <strong>实采活动选项</strong>
+        <small>源自 {events} 个首尔公开在售活动</small>
+      </div>
+    </div>
+    <div class="metric-card">
+      <span class="metric-num">{catalog.offers.length}</span>
+      <div>
+        <strong>已拆解项目报价</strong>
+        <small>区分同规格可比与条件限定</small>
+      </div>
+    </div>
+    <div class="metric-card">
+      <span class="metric-num">{clinics}</span>
+      <div>
+        <strong>首尔医美机构</strong>
+        <small>覆盖江南、瑞草、麻浦等区域</small>
+      </div>
+    </div>
+    <div class="metric-card">
+      <span class="metric-num">{fxSample ? `¥${fxSample}` : '待更新'}</span>
+      <div>
+        <strong>每 ₩10,000 参考折算</strong>
+        <small>汇率日期 {catalog.rate?.date || '待接入'}</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="shell section-block" id="price-radar">
+    <div class="section-header">
+      <div>
+        <span class="section-kicker">PRICE RADAR · 十项核心轻医美</span>
+        <h2>按项目进入同规格比价</h2>
+        <p>同名项目因设备版本、国产/进口分档与单次剂量不同，价格可相差数倍。点击任意项目查看完整分档与院方报价。</p>
+      </div>
+      <a class="btn-secondary" href="/activities/">浏览全部 {raw.length} 条原站选项 →</a>
+    </div>
+
+    <div class="radar-table" role="region" aria-label="十项轻医美价格总览">
+      <div class="radar-thead">
+        <span>项目与比价标尺</span>
+        <span>已收录活动规格示例</span>
+        <span>该规格公开标价</span>
+        <span>收录数量</span>
+      </div>
+
+      {index.map(p => (
+        <a href={`/procedures/${p.id}/`} class:list={['radar-trow', p.all.length === 0 && 'is-collecting']}>
+          <div class="radar-cell-proc">
+            <span class="proc-icon-wrap" data-proc={p.id}>
+              <ProcedureIcon id={p.id} size={22} />
+            </span>
+            <div>
+              <div class="proc-title-line">
+                <h3>{p.name}</h3>
+                <span class="proc-ko" lang="ko">{p.ko}</span>
+              </div>
+              <p class="proc-rule">{p.compareRule}</p>
+            </div>
+          </div>
+
+          <div class="radar-cell-sample">
+            {p.sample ? (
+              <>
+                <div class="sample-name">{consumerTitle(p.sample)}</div>
+                <div class="sample-meta">
+                  <span>{specText(p.sample)}</span>
+                  <span>·</span>
+                  <span>{clinicTitle(p.sample)}</span>
+                  <span>·</span>
+                  <span>{sourceNames[p.sample.source]}</span>
+                </div>
+                {p.sample.conditions.length > 0 ? (
+                  <div class="sample-tags">
+                    {p.sample.conditions.map((c: string) => (
+                      <span class="badge badge-amber">{conditionNames[c] || c}</span>
+                    ))}
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <div class="sample-name is-muted">暂未检出符合保守规则的标准样本</div>
+                <div class="sample-meta">可在「全部活动」检索相关复合套餐，绝不填充虚构报价</div>
+              </>
+            )}
+          </div>
+
+          <div class="radar-cell-price">
+            {p.sample ? (
+              <>
+                <div class="radar-price-main">
+                  <strong>{cny(p.sample.price_krw)}</strong>
+                  <span>{krw(p.sample.price_krw)}</span>
+                </div>
+                {p.sample.unit_price_krw !== null ? (
+                  <span class="unit-pill-inline">
+                    折合 {cnyUnit(p.sample.unit_price_krw)} / {unitNames[p.sample.unit || ''] || '单位'}
+                  </span>
+                ) : (
+                  <span class="unit-pill-muted">仅展示总价 · 剂量待向医院确认</span>
+                )}
+              </>
+            ) : (
+              <span class="unit-pill-muted">待扩采补充</span>
+            )}
+          </div>
+
+          <div class="radar-cell-action">
+            <span class:list={['count-pill', p.all.length > 0 ? 'has-data' : 'no-data']}>
+              {p.all.length > 0 ? `${p.all.length} 条报价` : '整理中'}
+            </span>
+            <span class="row-arrow">去比价 <i aria-hidden="true">→</i></span>
+          </div>
+        </a>
+      ))}
+    </div>
+    <p class="table-footnote">
+      说明：上表展示的是已入库单条公开活动的真实标价示例（并非全网最低价或市场均价）。人民币按 {catalog.rate?.date || '近期'} 汇率折算仅供参考，到院结算以韩元及医院答复为准。
+    </p>
+  </section>
+
+  {reportEntries.length > 0 ? (
+    <section class="shell section-block">
+      <div class="section-header">
+        <div>
+          <span class="section-kicker">OBSERVATORY · 价格观察摘要</span>
+          <h2>最新入库样本记录</h2>
+          <p>所有机构名称与金额均由代码从实采数据库直接读取渲染，模型仅生成辅助文字说明。</p>
+        </div>
+        <a class="btn-secondary" href="/report/">进入价格观察室 →</a>
+      </div>
+      <div class="digest-grid">
+        {reportEntries.map(item => (
+          <article class="digest-card">
+            <div class="digest-top">
+              <span class="badge badge-subtle">{item.sectionTitle}</span>
+              {catalog.report_preview ? <span class="badge badge-amber">开发预览</span> : null}
+            </div>
+            <div class="digest-clinic">{item.clinic_name_zh || item.clinic_name}</div>
+            <div class="digest-price">
+              <strong>{cny(item.price_krw)}</strong>
+              <span>{krw(item.price_krw)}</span>
+            </div>
+            <p>{item.note}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  ) : null}
+
+  <section class="shell section-block" id="how-to-compare">
+    <div class="section-header">
+      <div>
+        <span class="section-kicker">BUYER GUIDE · 赴韩医美避坑指南</span>
+        <h2>为什么看着名字差不多，到院价格差几倍？</h2>
+      </div>
+    </div>
+    <div class="pitfall-grid">
+      <article class="pitfall-card">
+        <span class="pitfall-num">01</span>
+        <h3>先认设备与品牌，别被统称误导</h3>
+        <p>中文里常把多种提拉统称“超声刀”，但美版 Ulthera 与韩版舒立可 Shurink 单发成本相差近十倍；玻尿酸的进口乔雅登与韩国本土品牌同样不能混为一谈。</p>
+      </article>
+      <article class="pitfall-card">
+        <span class="pitfall-num">02</span>
+        <h3>看清“新客券抵扣”与限定门槛</h3>
+        <p>韩国平台醒目大字常是扣减新会员礼包与积分后的价格，或附加“仅限初诊、工作日限定、指定医生、韩国居民专享”。本站一律以公开原标价纳入计算并单列条件。</p>
+      </article>
+      <article class="pitfall-card">
+        <span class="pitfall-num">03</span>
+        <h3>核对 10% 增值税、睡眠麻醉与探头费</h3>
+        <p>部分报价不含 10% 附加税（VAT 별도）或需另付睡眠麻醉、独立治疗头与术后管理费。剂量未写明的项目我们会单独归入“规格待确认”，避免虚假低价误导。</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="shell section-block faq-section">
+    <div class="faq-layout">
+      <div class="faq-intro">
+        <span class="section-kicker">FAQ · 常见疑问</span>
+        <h2>出发前建议先确认的四个问题</h2>
+        <p>价格比对不能替代医疗面诊与质量判断。我们只呈现公开可核验的数据事实，帮助你带着明确问题与院方沟通。</p>
+        <a class="btn-secondary" href="/about/">了解完整分桶与计算规则 →</a>
+      </div>
+      <div class="faq-list">
+        <details open>
+          <summary>页面上的人民币金额就是到院实际刷卡金额吗？</summary>
+          <p>不是。人民币金额是按页面顶部标注日期的国际汇率折算的阅读参考值。韩国医院现场均以韩元结算，实际汇率、优惠资格与额外费用以原站及医院答复为准。</p>
+        </details>
+        <details>
+          <summary>标价更低，代表效果和服务也一样吗？</summary>
+          <p>不能这样判断。本站仅做公开标价拆解，不作医疗质量评价。设备探头版本、施术部位范围、是否院长亲诊及术后管理内容均可能不同，需逐项向医院核实。</p>
+        </details>
+        <details>
+          <summary>中国游客去医院一定能享受韩国平台上的活动价吗？</summary>
+          <p>不一定。部分活动存在初诊、工作日或韩国本地居民限定；预约前建议展开卡片点击「复制韩文项目与地址」，直接向医院客服确认外国人是否同价。</p>
+        </details>
+        <details>
+          <summary>医院和项目的中文名字是官方名称吗？</summary>
+          <p>站内中文名称由 AI 辅助翻译并经程序校验数字一致，方便中文母语者快速理解，并非医院注册官方中文名。每张卡片均可展开核对韩文原名、韩文地址与原活动链接。</p>
+        </details>
+      </div>
+    </div>
+  </section>
+</Base>

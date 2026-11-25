@@ -1,0 +1,262 @@
+---
+import Base from '../layouts/Base.astro';
+import {
+  catalog,
+  procedures,
+  krw,
+  cny,
+  sourceNames,
+  areaName,
+  shortAreaName,
+  clinicTitle,
+  categoryQueries,
+  detectProcedure,
+} from '../data/catalog';
+
+const rawOptions = catalog.raw_options || [];
+const clinicPageIds = new Set(catalog.clinics.map(c => c.id));
+const enriched = rawOptions.map((o, idx) => {
+  const searchBlob = `${o.option_name_zh || ''} ${o.event_title_zh || ''} ${clinicTitle(o)} ${o.clinic_name} ${o.option_name} ${areaName(o.address)}`.toLowerCase();
+  const matchedProc = detectProcedure(`${o.option_name_zh || ''} ${o.option_name}`);
+  const district = shortAreaName(o.address);
+  return { ...o, idx, searchBlob, matchedProc, district };
+});
+const options = [...enriched].sort((a, b) => (a.matchedProc ? 0 : 1) - (b.matchedProc ? 0 : 1) || a.idx - b.idx);
+const eventCount = new Set(options.map(o => o.event_id)).size;
+const clinicCount = new Set(options.map(o => o.clinic_id)).size;
+const districts = [...new Set(options.map(o => o.district))];
+const categoryCounts = Object.fromEntries(
+  procedures.map(p => {
+    const terms = (categoryQueries[p.id] || '').toLowerCase().split('|').filter(Boolean);
+    const cnt = options.filter(o => terms.some(t => o.searchBlob.includes(t))).length;
+    return [p.id, cnt];
+  })
+);
+---
+<Base title="全部实采活动 · 首尔价研所" active="activities">
+  <div class="shell page-container">
+    <header class="subpage-hero">
+      <div class="breadcrumbs">
+        <a href="/">十项总览</a>
+        <span>/</span>
+        <span>全部实采活动</span>
+      </div>
+      <div class="subpage-kicker">ALL RECORDED OPTIONS · 中韩双语原站活动库</div>
+      <h1>首尔公开医美活动选项库</h1>
+      <p>
+        当前共收录 <strong>{clinicCount}</strong> 家首尔机构、<strong>{eventCount}</strong> 个公开活动中的 <strong>{options.length}</strong> 个细分选项。中文为辅助译名，点击任意卡片均可展开韩文原文核对。
+      </p>
+    </header>
+
+    <div class="notice-banner">
+      <span class="notice-tag">浏览须知</span>
+      <span>本页包含单品、组合套餐及院内加购项；金额为该细分选项公开标价（非同规格单价排名）。如需按每发/每毫升严谨比价，请前往 <a href="/#price-radar" class="inline-link">十项同规格比价 →</a></span>
+    </div>
+
+    <div class="filter-bar is-stacked">
+      <div class="chip-group" aria-label="项目快捷筛选">
+        <button type="button" class="filter-chip" data-query="" aria-pressed="true">
+          全部 <small>{options.length}</small>
+        </button>
+        {procedures.map(p => (
+          <button type="button" class="filter-chip" data-query={categoryQueries[p.id]} aria-pressed="false">
+            {p.name} <small>{categoryCounts[p.id]}</small>
+          </button>
+        ))}
+      </div>
+
+      <div class="filter-controls">
+        <div class="control-search-wrap is-wide">
+          <input
+            class="control-search"
+            id="raw-search"
+            aria-label="搜索中文项目或医院"
+            placeholder="输入关键词筛选，如：超声刀、乔雅登、丽珠兰、江南区..."
+          />
+        </div>
+
+        <select id="raw-area" class="control-select" aria-label="按首尔区域筛选">
+          <option value="all">全部首尔区域（{districts.length}）</option>
+          {districts.map(d => <option value={d}>{d}</option>)}
+        </select>
+
+        <select id="raw-sort" class="control-select" aria-label="排列方式">
+          <option value="featured">推荐浏览（十项核心优先）</option>
+          <option value="original">按原收录顺序</option>
+          <option value="price_asc">选项总价从低到高（非同规格）</option>
+          <option value="price_desc">选项总价从高到低</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="list-status-bar">
+      <span id="result-count">显示 {options.length} 条活动选项</span>
+      <span>参考汇率日期：{catalog.rate?.date || '待更新'} · 标价与券后价已分开标注</span>
+    </div>
+
+    <div class="raw-cards-grid" id="raw-list">
+      {options.map((o, featuredIdx) => {
+        const copyPayload = `${o.clinic_name}\n${o.option_name}\n${o.address}`;
+        return (
+          <article
+            class="raw-card"
+            data-raw-option
+            data-featured-idx={featuredIdx}
+            data-orig-idx={o.idx}
+            data-price={o.price_krw}
+            data-area={o.district}
+            data-search={o.searchBlob}
+          >
+            <div class="raw-card-top">
+              <div class="raw-card-badges">
+                <span class="district-pill">{o.district}</span>
+                {o.matchedProc ? (
+                  <a href={`/procedures/${o.matchedProc.id}/`} class="proc-mini-tag">{o.matchedProc.name}</a>
+                ) : (
+                  <span class="proc-mini-tag is-other">综合皮肤管理 / 其他</span>
+                )}
+              </div>
+              <span class="source-text">{sourceNames[o.source]} · {o.observed_date}</span>
+            </div>
+
+            <h2 class="raw-card-title">{o.option_name_zh || '项目中文名称整理中'}</h2>
+
+            <div class="offer-clinic-line">
+              {clinicPageIds.has(o.clinic_id) ? (
+                <a href={`/clinics/${o.clinic_id}/`} class="clinic-link">{clinicTitle(o)}</a>
+              ) : (
+                <span class="clinic-plain">{clinicTitle(o)}</span>
+              )}
+              <span class="clinic-ko" lang="ko">{o.clinic_name}</span>
+            </div>
+
+            <div class="badge-row" style="margin-top: 10px">
+              <span class="badge badge-subtle">{o.sessions_raw?.replace('회', ' 次') || '次数待确认'}</span>
+              <span class:list={['badge', o.vat === 'included' ? 'badge-emerald' : 'badge-amber']}>
+                {o.vat === 'included' ? '✓ 已含税' : o.vat === 'excluded' ? '未税标价 (+10%)' : '税费待确认'}
+              </span>
+              {o.coupon_price_krw && o.coupon_price_krw < o.price_krw ? (
+                <span class="badge badge-subtle">券后参考 {krw(o.coupon_price_krw)}</span>
+              ) : null}
+            </div>
+
+            <div class="raw-card-pricebar">
+              <div>
+                <span class="price-label-top">该选项公开标价</span>
+                <div class="price-Headline">
+                  <strong class="cny-big">{cny(o.price_krw)}</strong>
+                  <span class="krw-sub">{krw(o.price_krw)}</span>
+                </div>
+              </div>
+              <a class="btn-outline-sm" href={o.url} target="_blank" rel="noopener noreferrer">原站详情 ↗</a>
+            </div>
+
+            <details class="raw-drawer">
+              <summary>
+                <span>核对韩文原名、活动标题与地址</span>
+                <span class="drawer-chevron" aria-hidden="true">▾</span>
+              </summary>
+              <div class="raw-drawer-body">
+                <p><strong>活动标题参考译文：</strong>{o.event_title_zh || '—'}（原站宣传语，非本站评价）</p>
+                <p lang="ko"><strong>选项原名：</strong>{o.option_name}</p>
+                <p lang="ko"><strong>活动原名：</strong>{o.event_title}</p>
+                <p lang="ko"><strong>医院与地址：</strong>{o.clinic_name} · {o.address}</p>
+                {o.coupon_price_krw ? (
+                  <p><strong>优惠券说明：</strong>扣减新会员券/积分后为 {krw(o.coupon_price_krw)}，需满足平台资格。</p>
+                ) : null}
+                <div class="raw-drawer-foot">
+                  <span>中文译名仅供参考，预约请以韩文原名为准</span>
+                  <button type="button" class="copy-btn" data-copy={copyPayload}>复制韩文信息</button>
+                </div>
+              </div>
+            </details>
+          </article>
+        );
+      })}
+    </div>
+
+    <div id="raw-empty" class="empty-box" hidden>
+      <h3>没有找到匹配的活动选项</h3>
+      <p>试试搜索“超声刀”“玻尿酸”“丽珠兰”“肉毒”，或切换上方分类与首尔区域筛选。</p>
+      <button type="button" id="reset-raw-filters" class="btn-secondary" style="margin-top: 14px">清空全部筛选条件</button>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById('raw-search') as HTMLInputElement;
+    const areaSelect = document.getElementById('raw-area') as HTMLSelectElement;
+    const sortSelect = document.getElementById('raw-sort') as HTMLSelectElement;
+    const list = document.getElementById('raw-list');
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-raw-option]'));
+    let categoryQuery = '';
+    let selectedArea = 'all';
+
+    function filter() {
+      const rawInput = input?.value.toLowerCase().trim() || '';
+      const queries = (categoryQuery || rawInput).split('|').filter(Boolean);
+      let n = 0;
+      cards.forEach(el => {
+        const matchQuery = queries.length === 0 || queries.some(q => (el.dataset.search || '').includes(q));
+        const matchArea = selectedArea === 'all' || el.dataset.area === selectedArea;
+        const show = matchQuery && matchArea;
+        el.hidden = !show;
+        if (show) n++;
+      });
+      const c = document.getElementById('result-count');
+      if (c) c.textContent = `显示 ${n} 条活动选项（共收录 ${cards.length} 条）`;
+      const empty = document.getElementById('raw-empty');
+      if (empty) empty.hidden = n > 0;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const initialQ = params.get('q')?.trim();
+    if (initialQ && input) {
+      input.value = initialQ;
+      document.querySelectorAll('[data-query]').forEach(el => el.setAttribute('aria-pressed', 'false'));
+      filter();
+    }
+
+    input?.addEventListener('input', () => {
+      categoryQuery = '';
+      document.querySelectorAll('[data-query]').forEach(el => el.setAttribute('aria-pressed', 'false'));
+      if (!input.value.trim()) {
+        document.querySelector('[data-query=""]')?.setAttribute('aria-pressed', 'true');
+      }
+      filter();
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('[data-query]').forEach(b =>
+      b.addEventListener('click', () => {
+        categoryQuery = (b.dataset.query || '').toLowerCase();
+        if (input) input.value = '';
+        document.querySelectorAll('[data-query]').forEach(el => el.setAttribute('aria-pressed', String(el === b)));
+        filter();
+      })
+    );
+
+    areaSelect?.addEventListener('change', () => {
+      selectedArea = areaSelect.value;
+      filter();
+    });
+
+    document.getElementById('reset-raw-filters')?.addEventListener('click', () => {
+      categoryQuery = '';
+      selectedArea = 'all';
+      if (input) input.value = '';
+      if (areaSelect) areaSelect.value = 'all';
+      document.querySelectorAll('[data-query]').forEach(el => el.setAttribute('aria-pressed', String((el as HTMLElement).dataset.query === '')));
+      filter();
+    });
+
+    sortSelect?.addEventListener('change', () => {
+      const mode = sortSelect.value;
+      const sorted = [...cards].sort((a, b) => {
+        if (mode === 'price_asc') return Number(a.dataset.price) - Number(b.dataset.price);
+        if (mode === 'price_desc') return Number(b.dataset.price) - Number(a.dataset.price);
+        if (mode === 'original') return Number(a.dataset.origIdx) - Number(b.dataset.origIdx);
+        return Number(a.dataset.featuredIdx) - Number(b.dataset.featuredIdx);
+      });
+      sorted.forEach(el => list?.appendChild(el));
+    });
+  </script>
+</Base>

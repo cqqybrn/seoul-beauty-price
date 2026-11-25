@@ -1,0 +1,76 @@
+---
+import Base from '../layouts/Base.astro';
+import { catalog, krw, cny } from '../data/catalog';
+const clinicMap = new Map(catalog.clinics.map(c => [c.name, c.id]));
+---
+<Base active="report" title="价格观察室 · 首尔价研所">
+  <div class="shell page-container">
+    <header class="subpage-hero">
+      <div class="breadcrumbs">
+        <a href="/">十项总览</a>
+        <span>/</span>
+        <span>价格解读</span>
+      </div>
+      <div class="subpage-kicker">PRICE OBSERVATORY · 结构化数据观察</div>
+      <h1>留意真实价格变动，不追逐营销话术</h1>
+      <p>所有机构名称与标价数字均由代码按 ID 从实采数据库直接读取渲染；分析模型仅受限访问只读视图并撰写简要备注。</p>
+    </header>
+
+    {catalog.report_preview ? (
+      <div class="notice-banner is-amber">
+        <span class="notice-tag">开发预览</span>
+        <span>当前为基于已入库真实样本生成的分析预览草稿（尚未开启每日定时自动发布）。无跨日降价证据时绝不编造降价趋势。</span>
+      </div>
+    ) : null}
+
+    {catalog.report ? (
+      <div class="report-sections">
+        <div class="list-status-bar">
+          <span>观察基准日期：{catalog.report.date}</span>
+          <span>汇率参考：{catalog.rate?.date || '待更新'}</span>
+        </div>
+
+        {catalog.report.sections.map(s => (
+          <section class="report-block">
+            <div class="report-block-head">
+              <h2>{s.title === '新上架活动' ? '新入库活动观察' : s.title}</h2>
+              <span class="badge badge-subtle">{s.entries.length} 条记录</span>
+            </div>
+
+            {s.entries.length ? (
+              <div class="digest-grid">
+                {s.entries.map(e => {
+                  const cid = clinicMap.get(e.clinic_name);
+                  return (
+                    <article class="digest-card">
+                      <div class="digest-clinic">
+                        {cid ? (
+                          <a href={`/clinics/${cid}/`} class="clinic-link">{e.clinic_name_zh || e.clinic_name}</a>
+                        ) : (
+                          <span>{e.clinic_name_zh || e.clinic_name}</span>
+                        )}
+                        <small class="clinic-ko" lang="ko">{e.clinic_name}</small>
+                      </div>
+                      <div class="digest-price">
+                        <strong>{cny(e.price_krw)}</strong>
+                        <span>{krw(e.price_krw)}</span>
+                      </div>
+                      <p>{e.note}</p>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div class="report-empty-row">本期无符合该分类条件的变动记录（样本积累中）。</div>
+            )}
+          </section>
+        ))}
+      </div>
+    ) : (
+      <section class="empty-box">
+        <h2>今日暂无已发布的观察日报</h2>
+        <p>在完成多日连续实采对比之前，系统不会生成模拟降价或未经核实的观察内容。</p>
+      </section>
+    )}
+  </div>
+</Base>

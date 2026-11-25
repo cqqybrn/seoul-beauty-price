@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Seoul price pipeline at 04:00 KST
+
+[Timer]
+OnCalendar=*-*-* 04:00:00 Asia/Seoul
+Persistent=false
+AccuracySec=1min
+Unit=kbeauty-pipeline.service
+
+[Install]
+WantedBy=timers.target

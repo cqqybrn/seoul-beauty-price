@@ -1,0 +1,95 @@
+---
+import Base from '../layouts/Base.astro';
+import { catalog, tenThousandKrwCny } from '../data/catalog';
+const fxSample = tenThousandKrwCny();
+---
+<Base active="about" title="比价规则与数据说明 · 首尔价研所">
+  <div class="shell page-container">
+    <header class="subpage-hero">
+      <div class="breadcrumbs">
+        <a href="/">十项总览</a>
+        <span>/</span>
+        <span>比价说明</span>
+      </div>
+      <div class="subpage-kicker">METHODOLOGY & GOVERNANCE · 透明比价方法论</div>
+      <h1>把什么放进同规格比价，都有明确标尺</h1>
+      <p>不收医院竞价费、不拿新客券后价充当普适低价、不让大模型决定谁便宜谁贵。</p>
+    </header>
+
+    <div class="about-bento">
+      <section class="info-card is-span-2">
+        <span class="section-kicker">01 · UNIT PRICE FORMULA</span>
+        <h2>单位价是怎么算出来的？</h2>
+        <div class="formula-strip">
+          <div class="formula-step">
+            <small>公开原标价</small>
+            <strong>不含新客券标价 × 税率</strong>
+            <span>未税（VAT 별도）自动 × 1.1</span>
+          </div>
+          <span class="formula-op">÷</span>
+          <div class="formula-step">
+            <small>疗程次数</small>
+            <strong>单次折算价</strong>
+            <span>如 3 次套餐拆算为单次</span>
+          </div>
+          <span class="formula-op">÷</span>
+          <div class="formula-step">
+            <small>单次明确剂量</small>
+            <strong>可比单位价</strong>
+            <span>每发(shot) / 每毫升(cc)</span>
+          </div>
+        </div>
+        <p class="card-note">
+          按<strong>「项目 + 品牌分档 + 标准单位」</strong>严格分桶：美版超声刀（Ulthera）与韩版舒立可（Shurink）绝不混比；进口品牌与韩国本土品牌玻尿酸绝不混比。多项目捆绑套餐、含“~起价（~부터）”或未标明具体剂量的条目，单位价一律置空并归入独立分区，不参与单价排名。
+        </p>
+      </section>
+
+      <section class="info-card">
+        <span class="section-kicker">02 · CODE-DRIVEN LABELS</span>
+        <h2>价格区间标签完全由代码决定</h2>
+        <ul class="rule-list">
+          <li><strong>样本门槛：</strong>同一分桶内有效单价样本少于 10 条时，仅按单价排序展示，不评判“偏低/偏高”。</li>
+          <li><strong>分位数标尺：</strong>满 10 条时，单位价 ≤ P25 标为「同类单价偏低」，≥ P75 标为「同类单价偏高」，中间为常规区间。</li>
+          <li><strong>异常与条件隔离：</strong>低于 <code>max(P5, 中位数 × 0.5)</code> 的条目自动隔离至「低价需复核」；初诊限定、韩国人限定、学生限定等归入「有限定条件」分区。</li>
+        </ul>
+      </section>
+
+      <section class="info-card">
+        <span class="section-kicker">03 · DATA SOURCES</span>
+        <h2>公开数据来源与采集边界</h2>
+        <ul class="rule-list">
+          <li><strong>女神门票（Yeoshin，yeoshin.co.kr）：</strong>已接入首尔公开活动实采。</li>
+          <li><strong>Babitalk（babitalk.com）：</strong>适配器与选项验证推进中，尚未计入跨平台覆盖。</li>
+          <li><strong>江南姐姐（unni.app）：</strong>严格遵守其 <code>robots.txt</code> 规范，保持禁用不采集。</li>
+          <li><strong>隐私与合规：</strong>不登录、不绕过验证码、不采集任何患者评价、昵称、照片或医生个人信息。</li>
+        </ul>
+      </section>
+
+      <section class="info-card">
+        <span class="section-kicker">04 · AI BOUNDARIES</span>
+        <h2>AI 做什么、绝对不做什么</h2>
+        <p>
+          中文选项与机构参考译名由 Gemini 辅助生成，并经代码强制校验翻译前后全部数字一致（确保发数、毫升数、次数不被篡改）；但中文译名并非医院官方认证名称，请随时展开卡片核对韩文原文。
+        </p>
+        <p style="margin-top: 10px">
+          <strong>AI 绝不决定排名与价格：</strong>所有金额、分位数标签与机构原名均由确定性代码从 SQLite 数据库计算渲染；分析代理仅能查询脱敏只读视图。
+        </p>
+      </section>
+
+      <section class="info-card">
+        <span class="section-kicker">05 · FX & CONTACT</span>
+        <h2>汇率换算与下架联系</h2>
+        <p>
+          {catalog.rate
+            ? `当前汇率日期 ${catalog.rate.date}：1 韩元 = ${catalog.rate.krw_cny} 人民币（每 ₩10,000 ≈ ¥${fxSample}）。`
+            : '当前暂无已验证汇率缓存。'}
+          人民币金额仅供阅读估算，现场支付以医院韩元结算为准。
+        </p>
+        <p style="margin-top: 10px">
+          数据状态：{catalog.mode === 'empty' ? '初始化空库' : `最近静态数据生成于 ${catalog.generated_at}`}。<br />
+          内容更正或机构下架联系邮箱：待站长正式上线前配置公示。本站不提供医疗建议或预约中介服务。
+        </p>
+      </section>
+    </div>
+  </div>
+</Base>

@@ -1,0 +1,242 @@
+---
+import Base from '../../layouts/Base.astro';
+import OfferCard from '../../components/OfferCard.astro';
+import ProcedureIcon from '../../components/ProcedureIcon.astro';
+import {
+  catalog,
+  procedures,
+  krw,
+  cnyUnit,
+  tierNames,
+  unitNames,
+  offerGroup,
+  shortAreaName,
+} from '../../data/catalog';
+
+export function getStaticPaths(){return procedures.map(p=>({params:{id:p.id},props:{procedure:p}}));}
+const {procedure:p}=Astro.props;
+const offers=catalog.offers.filter(o=>o.procedure_id===p.id).sort((a,b)=>(a.unit_price_krw??Infinity)-(b.unit_price_krw??Infinity));
+const groupNames=[['default','可比较的规格'],['conditional','有限定条件'],['anomaly','低价需复核'],['bundle','组合套餐'],['unranked','规格待确认']];
+const initialGroup=offers.some(o=>offerGroup(o)==='default')?'default':offers.some(o=>!o.is_bundle&&!o.conditions.length&&o.unit_price_krw===null)?'unranked':'conditional';
+const stats=(catalog.bucket_stats||[]).filter(s=>s.bucket_key.startsWith(p.id+':'));
+const districts = [...new Set(offers.map(o => shortAreaName(o.address)))];
+const allCounts = Object.fromEntries(procedures.map(proc => [proc.id, catalog.offers.filter(o => o.procedure_id === proc.id).length]));
+---
+<Base title={`${p.name}公开活动价 · 首尔价研所`} active="home">
+  <div class="proc-switcher-bar">
+    <div class="shell proc-switcher-scroll" aria-label="十项轻医美快速切换">
+      {procedures.map(proc => (
+        <a
+          href={`/procedures/${proc.id}/`}
+          class:list={['proc-switch-pill', proc.id === p.id && 'is-current']}
+          aria-current={proc.id === p.id ? 'page' : undefined}
+        >
+          <span>{proc.name}</span>
+          <small>{allCounts[proc.id]}</small>
+        </a>
+      ))}
+    </div>
+  </div>
+
+  <div class="shell page-container">
+    <header class="subpage-hero">
+      <div class="breadcrumbs">
+        <a href="/">十项总览</a>
+        <span>/</span>
+        <span>{p.name}</span>
+      </div>
+      <div class="subpage-title-row">
+        <span class="proc-icon-lg">
+          <ProcedureIcon id={p.id} size={28} />
+        </span>
+        <div>
+          <div class="subpage-kicker">{p.en} · <span lang="ko">{p.ko}</span> · 首尔公开活动比价</div>
+          <h1>{p.name}</h1>
+          <p>{p.detail} · 核心核算单位：<strong>{p.unit}</strong>（{p.compareRule}）</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="notice-banner">
+      <span class="notice-tag">核验提示</span>
+      <span>价格是韩国平台上的公开活动价，外国人是否适用以医院答复为准。本站按不含新客券的公开标价计算单价。</span>
+    </div>
+
+    {stats.length > 0 ? (
+      <section class="benchmark-panel" aria-label="同规格单价分布参考">
+        <div class="benchmark-panel-head">
+          <h2>同规格单位价区间参考</h2>
+          <span>基于当前已核实剂量的有效样本分位数（非全网均价）</span>
+        </div>
+        <div class="benchmark-cards">
+          {stats.map(s => {
+            const tierKey = s.bucket_key.split(':')[1];
+            const unitKey = s.bucket_key.split(':')[2];
+            const uLabel = unitNames[unitKey] || unitKey;
+            return (
+              <div class="bstat-card">
+                <div class="bstat-meta">
+                  <strong>{tierNames[tierKey] || tierKey}</strong>
+                  <span>{s.n} 条可算单价样本 · 每{uLabel}</span>
+                </div>
+                <div class="bstat-metrics">
+                  <div class="bstat-col">
+                    <small>P25 偏低参考</small>
+                    <b>{cnyUnit(s.p25)}</b>
+                    <span>{krw(s.p25)}</span>
+                  </div>
+                  <div class="bstat-col is-median">
+                    <small>中位单价</small>
+                    <b>{cnyUnit(s.median)}</b>
+                    <span>{krw(s.median)}</span>
+                  </div>
+                  <div class="bstat-col">
+                    <small>P75 偏高参考</small>
+                    <b>{cnyUnit(s.p75)}</b>
+                    <span>{krw(s.p75)}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    ) : null}
+
+    {offers.length > 0 ? (
+      <>
+        <div class="partition-tabs" role="tablist" aria-label="比价分区">
+          {groupNames.map(([value, label]) => {
+            const cnt = offers.filter(o => offerGroup(o) === value).length;
+            return (
+              <button
+                type="button"
+                role="tab"
+                class:list={['ptab-btn', cnt === 0 && 'is-zero']}
+                data-group-filter={value}
+                aria-selected={value === initialGroup ? 'true' : 'false'}
+              >
+                <span>{label}</span>
+                <small>{cnt}</small>
+              </button>
+            );
+          })}
+        </div>
+
+        <div class="filter-bar">
+          <div class="chip-group" aria-label="品牌分档">
+            {[['all','全部品牌'],['single','专用设备 / 型号'],['domestic','韩国品牌'],['import','进口品牌'],['unknown','品牌待确认']].map(([value, label]) => (
+              <button type="button" class="filter-chip" data-tier-filter={value} aria-pressed={value === 'all' ? 'true' : 'false'}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div class="filter-controls">
+            <select id="area-select" class="control-select" aria-label="筛选首尔地区">
+              <option value="all">全部首尔区域（{districts.length}）</option>
+              {districts.map(d => <option value={d}>{d}</option>)}
+            </select>
+
+            <select id="sort-select" class="control-select" aria-label="排序方式">
+              <option value="unit">按单位价从低到高</option>
+              <option value="total">按活动总价从低到高</option>
+            </select>
+
+            <div class="control-search-wrap">
+              <input
+                class="control-search"
+                aria-label="搜索医院或品牌"
+                placeholder="搜医院 / 品牌 / 规格关键词..."
+                id="offer-search"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="list-status-bar">
+          <span id="visible-offer-count">当前显示 {offers.length} 条报价</span>
+          <span>{catalog.rate ? `参考汇率日期：${catalog.rate.date}（人民币仅供参考）` : '汇率待接入'}</span>
+        </div>
+
+        <div id="offers" class="offer-stack" data-initial-group={initialGroup}>
+          {offers.map(o => <OfferCard offer={o} />)}
+        </div>
+
+        <div id="no-results" class="empty-box" hidden>
+          <h3>当前筛选条件下暂无报价</h3>
+          <p>请尝试切换上方的「比价分区」标签（如查看“规格待确认”或“有限定条件”），或清空品牌与地区筛选。</p>
+          <button type="button" id="reset-offer-filters" class="btn-secondary" style="margin-top: 14px">重置品牌与地区筛选</button>
+        </div>
+      </>
+    ) : (
+      <section class="empty-box">
+        <span class="proc-icon-lg" style="margin: 0 auto 14px">
+          <ProcedureIcon id={p.id} size={28} />
+        </span>
+        <h2>暂未检出 {p.name} 的独立标准化报价</h2>
+        <p>该项目目前暂无通过保守剂量抽取规则的独立单品，但你可能在组合活动或全部选项中找到相关套餐。</p>
+        <a href={`/activities/?q=${encodeURIComponent(p.name)}`} class="btn-primary" style="margin-top: 16px; display: inline-flex">
+          去全部活动中搜索「{p.name}」 →
+        </a>
+      </section>
+    )}
+  </div>
+
+<script>
+let tier = 'all';
+let area = 'all';
+let group = document.getElementById('offers')?.dataset.initialGroup || 'default';
+let search = '';
+const listEl = document.getElementById('offers');
+const countEl = document.getElementById('visible-offer-count');
+
+function filter() {
+  let n = 0;
+  document.querySelectorAll<HTMLElement>('[data-offer]').forEach(el => {
+    const matchTier = tier === 'all' || el.dataset.tier === tier;
+    const matchArea = area === 'all' || el.dataset.area === area;
+    const matchGroup = el.dataset.group === group;
+    const matchSearch = !search || (el.dataset.search || '').toLowerCase().includes(search);
+    const show = matchTier && matchArea && matchGroup && matchSearch;
+    el.hidden = !show;
+    if (show) n++;
+  });
+  if (countEl) countEl.textContent = `当前分区显示 ${n} 条报价（该项目共收录 ${document.querySelectorAll('[data-offer]').length} 条）`;
+  const empty = document.getElementById('no-results');
+  if (empty) empty.hidden = n > 0;
+}
+
+document.querySelectorAll<HTMLButtonElement>('[data-tier-filter]').forEach(b=>b.addEventListener('click',()=>{tier=b.dataset.tierFilter||'all';document.querySelectorAll('[data-tier-filter]').forEach(el=>el.setAttribute('aria-pressed',String(el===b)));filter();}));
+document.querySelectorAll<HTMLButtonElement>('[data-group-filter]').forEach(b=>b.addEventListener('click',()=>{group=b.dataset.groupFilter||'default';document.querySelectorAll('[data-group-filter]').forEach(el=>el.setAttribute('aria-selected',String(el===b)));filter();}));
+document.getElementById('area-select')?.addEventListener('change', e => {
+  area = (e.target as HTMLSelectElement).value;
+  filter();
+});
+document.getElementById('sort-select')?.addEventListener('change', e => {
+  const mode = (e.target as HTMLSelectElement).value;
+  if (!listEl) return;
+  const items = [...listEl.querySelectorAll<HTMLElement>('[data-offer]')];
+  items.sort((a, b) => {
+    if (mode === 'total') return Number(a.dataset.price || 0) - Number(b.dataset.price || 0);
+    const ua = Number(a.dataset.unitPrice || 999999999);
+    const ub = Number(b.dataset.unitPrice || 999999999);
+    return ua !== ub ? ua - ub : Number(a.dataset.price || 0) - Number(b.dataset.price || 0);
+  });
+  items.forEach(item => listEl.appendChild(item));
+});
+document.getElementById('offer-search')?.addEventListener('input',e=>{search=(e.target as HTMLInputElement).value.trim().toLowerCase();filter();});
+document.getElementById('reset-offer-filters')?.addEventListener('click', () => {
+  tier = 'all';
+  area = 'all';
+  search = '';
+  document.querySelectorAll('[data-tier-filter]').forEach(el => el.setAttribute('aria-pressed', String((el as HTMLElement).dataset.tierFilter === 'all')));
+  const areaEl = document.getElementById('area-select') as HTMLSelectElement | null;
+  if (areaEl) areaEl.value = 'all';
+  const searchEl = document.getElementById('offer-search') as HTMLInputElement | null;
+  if (searchEl) searchEl.value = '';
+  filter();
+});
+filter();
+</script>
+</Base>

@@ -1,0 +1,156 @@
+---
+import {
+  krw,
+  cny,
+  cnyUnit,
+  tierNames,
+  conditionNames,
+  unitNames,
+  sourceNames,
+  brandNames,
+  areaName,
+  shortAreaName,
+  consumerTitle,
+  clinicTitle,
+  offerGroup,
+  specText,
+} from '../data/catalog';
+const {offer:o}=Astro.props;
+const group=offerGroup(o);
+const district = shortAreaName(o.address);
+const labelNames:Record<string,string>={
+  cheap:'同类单价偏低',
+  normal:'同类常规区间',
+  expensive:'同类单价偏高',
+  anomaly_low:'异常低价 · 请复核',
+  unranked:'样本未满10条 · 仅排单价',
+};
+const labelTone:Record<string,string>={
+  cheap:'badge-emerald',
+  normal:'badge-neutral',
+  expensive:'badge-rose',
+  anomaly_low:'badge-amber',
+  unranked:'badge-subtle',
+};
+const copyPayload = `${o.clinic_name}\n${o.option_name || ''}\n${o.address}`;
+---
+<article
+  class="offer-row-card"
+  data-offer
+  data-tier={o.tier}
+  data-group={group}
+  data-area={district}
+  data-price={o.price_krw}
+  data-unit-price={o.unit_price_krw ?? 999999999}
+  data-search={`${consumerTitle(o)} ${clinicTitle(o)} ${o.clinic_name} ${o.brand_id||''} ${brandNames[o.brand_id||'']||''} ${o.option_name||''} ${areaName(o.address)}`.toLowerCase()}
+>
+  <div class="offer-main-grid">
+    <div class="offer-col-info">
+      <div class="offer-meta-row">
+        <span class="district-pill">{district}</span>
+        <span class="meta-sep">·</span>
+        <span class="source-text">{sourceNames[o.source] || o.source}</span>
+        <span class="meta-sep">·</span>
+        <span class="source-text">{o.observed_date} 采集</span>
+      </div>
+
+      <h3 class="offer-title">{consumerTitle(o)}</h3>
+
+      <div class="offer-clinic-line">
+        <a href={`/clinics/${o.clinic_id}/`} class="clinic-link">{clinicTitle(o)}</a>
+        <span class="clinic-ko" lang="ko">{o.clinic_name}</span>
+      </div>
+    </div>
+
+    <div class="offer-col-specs">
+      <div class="spec-kv-list">
+        <div class="spec-kv">
+          <span class="spec-k">规格疗程</span>
+          <strong class="spec-v">{specText(o)}</strong>
+        </div>
+        <div class="spec-kv">
+          <span class="spec-k">品牌分档</span>
+          <span class="spec-v">{brandNames[o.brand_id||''] || '未标具体品牌'} · <em class="tier-inline">{tierNames[o.tier]}</em></span>
+        </div>
+      </div>
+
+      <div class="badge-row">
+        <span class:list={['badge', o.vat === 'included' ? 'badge-emerald' : 'badge-amber']}>
+          {o.vat === 'included' ? '✓ 已含税' : o.vat === 'excluded' ? '未税标价 (+10%)' : '税费待确认'}
+        </span>
+        {o.conditions.map((c:string) => (
+          <span class="badge badge-amber">{conditionNames[c] || c}</span>
+        ))}
+        {o.price_from ? <span class="badge badge-amber">起价 (~부터)</span> : null}
+        {o.is_bundle ? <span class="badge badge-amber">多项目套餐</span> : null}
+        {o.extra_fees.map((f:string) => (
+          <span class="badge badge-amber">
+            另收{({anesthesia:'麻醉费', aftercare:'术后管理费', consultation:'咨询费'} as Record<string,string>)[f] || f}
+          </span>
+        ))}
+      </div>
+    </div>
+
+    <div class="offer-col-price">
+      <div class="price-primary-group">
+        <span class="price-label-top">{o.price_from ? '公开活动起价' : '公开活动标价'}</span>
+        <div class="price-Headline">
+          <strong class="cny-big">{cny(o.price_krw)}</strong>
+          <span class="krw-sub">{krw(o.price_krw)}</span>
+        </div>
+      </div>
+
+      {o.unit_price_krw !== null ? (
+        <div class="unit-price-box">
+          <span class="unit-calc">折合 <b>{cnyUnit(o.unit_price_krw)}</b> / {unitNames[o.unit||''] || '单位'}</span>
+          <span class:list={['badge', labelTone[o.label] || 'badge-subtle']}>{labelNames[o.label] || o.label}</span>
+        </div>
+      ) : (
+        <div class="unit-price-box is-muted">
+          <span>剂量或条件待确认 · 不参与单价排名</span>
+        </div>
+      )}
+
+      <div class="offer-cta-row">
+        {o.coupon_price_krw && o.coupon_price_krw < o.price_krw ? (
+          <span class="coupon-hint" title="扣减平台新会员券或积分后的展示价，仅供参考">券后 {krw(o.coupon_price_krw)}</span>
+        ) : <span class="coupon-hint">外国人同价请向院方确认</span>}
+        <a class="btn-outline-sm" href={o.url} target="_blank" rel="noopener noreferrer">原站活动 ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <details class="raw-drawer">
+    <summary>
+      <span>核对韩文原名、医院地址与价格记录</span>
+      <span class="drawer-chevron" aria-hidden="true">▾</span>
+    </summary>
+    <div class="raw-drawer-body">
+      <div class="raw-drawer-grid">
+        <div>
+          <span class="drawer-label">韩文选项原名</span>
+          <p lang="ko">{o.option_name || '—'}</p>
+        </div>
+        <div>
+          <span class="drawer-label">韩文机构与地址</span>
+          <p lang="ko">{o.clinic_name} · {o.address}</p>
+        </div>
+        <div>
+          <span class="drawer-label">标价与券后说明</span>
+          <p>
+            公开标价 {krw(o.price_krw)}
+            {o.coupon_price_krw ? `；平台券/积分抵扣后显示 ${krw(o.coupon_price_krw)}（本站统一按公开标价计算单价）` : '；无单独会员券抵扣价'}
+          </p>
+        </div>
+        <div>
+          <span class="drawer-label">{o.history && o.history.length > 1 ? '历次价格记录' : '首次采集记录'}</span>
+          <p>{o.history?.map((h:{date:string;price_krw:number}) => `${h.date}: ${krw(h.price_krw)}`).join(' / ') || `${o.observed_date}: ${krw(o.price_krw)}`}</p>
+        </div>
+      </div>
+      <div class="raw-drawer-foot">
+        <span>中文译名仅供阅读参考，到院咨询建议出示韩文原名核对。</span>
+        <button type="button" class="copy-btn" data-copy={copyPayload}>复制韩文项目与地址</button>
+      </div>
+    </div>
+  </details>
+</article>

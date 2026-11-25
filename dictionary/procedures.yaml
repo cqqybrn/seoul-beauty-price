@@ -1,0 +1,100 @@
+version: 1
+procedures:
+  - id: botox
+    name_zh: 肉毒素
+    name_ko: 보톡스
+    aliases: [보톡스, 톡스, 보툴리눔]
+    canonical_units: [unit, area]
+    quantity_bounds: {unit: [1, 500], area: [1, 20]}
+    brands:
+      - {id: botulax, aliases: [보툴렉스], tier: domestic}
+      - {id: nabota, aliases: [나보타], tier: domestic}
+      - {id: liztox, aliases: [리즈톡스], tier: domestic}
+      - {id: meditoxin, aliases: [메디톡신], tier: domestic}
+      - {id: coretox, aliases: [코어톡스], tier: domestic}
+      - {id: wondertox, aliases: [원더톡스], tier: domestic}
+      - {id: allergan, aliases: [엘러간, 앨러간, 보톡스 비스타], tier: import}
+      - {id: xeomin, aliases: [제오민], tier: import}
+      - {id: dysport, aliases: [디스포트], tier: import}
+  - id: filler
+    name_zh: 玻尿酸
+    name_ko: 필러
+    aliases: [필러]
+    canonical_units: [cc]
+    quantity_bounds: {cc: [0.1, 30]}
+    brands:
+      - {id: neuramis, aliases: [뉴라미스], tier: domestic}
+      - {id: elravie, aliases: [엘라비에], tier: domestic}
+      - {id: yvoire, aliases: [이브아르], tier: domestic}
+      - {id: atier, aliases: [아띠에르], tier: domestic}
+      - {id: juvederm, aliases: [쥬비덤], tier: import}
+      - {id: restylane, aliases: [레스틸렌], tier: import}
+      - {id: belotero, aliases: [벨로테로], tier: import}
+  - id: ulthera
+    name_zh: 超声刀（Ulthera）
+    name_ko: 울쎄라
+    aliases: [울쎄라, 울쎄라피 프라임, 울쎄라 프라임]
+    canonical_units: [shot]
+    quantity_bounds: {shot: [50, 1200]}
+    brands:
+      - {id: ulthera, aliases: [울쎄라, 울쎄라피 프라임, 울쎄라 프라임], tier: single}
+  - id: thermage
+    name_zh: 热玛吉
+    name_ko: 써마지
+    aliases: [써마지 FLX, 써마지]
+    canonical_units: [shot]
+    quantity_bounds: {shot: [100, 1800]}
+    brands:
+      - {id: thermage, aliases: [써마지, 써마지 FLX], tier: single}
+  - id: shurink
+    name_zh: Shurink
+    name_ko: 슈링크
+    aliases: [슈링크, 슈링크 유니버스]
+    canonical_units: [shot]
+    quantity_bounds: {shot: [50, 2000]}
+    brands:
+      - {id: shurink, aliases: [슈링크, 슈링크 유니버스], tier: single}
+  - id: rejuran
+    name_zh: 丽珠兰
+    name_ko: 리쥬란
+    aliases: [리쥬란, 리쥬란힐러, 리쥬란 HB, 리쥬란 아이]
+    canonical_units: [cc]
+    quantity_bounds: {cc: [0.1, 20]}
+    brands:
+      - {id: healer, aliases: [리쥬란힐러, 리쥬란 힐러], tier: single}
+      - {id: hb, aliases: [리쥬란 HB, 리쥬란HB, 리쥬란 에이치비], tier: single}
+      - {id: eye, aliases: [리쥬란 아이, 리쥬란아이], tier: single}
+      - {id: s, aliases: [리쥬란 S, 리쥬란에스], tier: single}
+  - id: skinbooster
+    name_zh: 水光
+    name_ko: 물광주사
+    aliases: [물광주사, 물광 주사, 스킨부스터]
+    canonical_units: [cc]
+    quantity_bounds: {cc: [0.1, 30]}
+    brands: []
+  - id: pico
+    name_zh: 皮秒
+    name_ko: 피코
+    aliases: [피코, 피코슈어, 피코웨이, 피코플러스]
+    canonical_units: [session]
+    quantity_bounds: {session: [1, 1]}
+    brands:
+      - {id: picosure, aliases: [피코슈어], tier: single}
+      - {id: picoway, aliases: [피코웨이], tier: single}
+      - {id: picoplus, aliases: [피코플러스], tier: single}
+  - id: inmode
+    name_zh: Inmode
+    name_ko: 인모드
+    aliases: [인모드, 인모드 FX, 포마]
+    canonical_units: [session, area]
+    quantity_bounds: {session: [1, 1], area: [1, 10]}
+    brands:
+      - {id: inmode, aliases: [인모드, 인모드 FX, 포마], tier: single}
+  - id: potenza
+    name_zh: Potenza
+    name_ko: 포텐자
+    aliases: [포텐자]
+    canonical_units: [session]
+    quantity_bounds: {session: [1, 1]}
+    brands:
+      - {id: potenza, aliases: [포텐자], tier: single}

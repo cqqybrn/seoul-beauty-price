@@ -1,0 +1,70 @@
+---
+const { id, size = 22 } = Astro.props;
+---
+{id === 'botox' && (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 3.5C12 3.5 6.5 10 6.5 14.2a5.5 5.5 0 0 0 11 0C17.5 10 12 3.5 12 3.5Z" />
+    <path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5" />
+  </svg>
+)}
+{id === 'filler' && (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="10.5" cy="10.5" r="5.5" />
+    <circle cx="14.5" cy="14.5" r="4.5" />
+    <path d="M8.5 9.5c.6-.8 1.5-1.2 2.5-1.2" />
+  </svg>
+)}
+{id === 'ulthera' && (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M4 8.5c4.5 4 11.5 4 16 0" />
+    <path d="M6.5 13c3.2 2.8 7.8 2.8 11 0" />
+    <circle cx="12" cy="18" r="1.75" fill="currentColor" stroke="none" />
+    <path d="M12 4v3" />
+  </svg>
+)}
+{id === 'thermage' && (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <rect x="4.5" y="4.5" width="15" height="15" rx="3.5" />
+    <path d="M9.5 4.5v15M14.5 4.5v15M4.5 9.5h15M4.5 14.5h15" />
+  </svg>
+)}
+{id === 'shurink' && (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M5 15.5c2.2-2.5 4.8-3.8 7-3.8s4.8 1.3 7 3.8" />
+    <path d="M5 10.5c2.2-2.5 4.8-3.8 7-3.8s4.8 1.3 7 3.8" />
+    <path d="M12 16.5v3.5M9.5 18.5L12 16l2.5 2.5" />
+  </svg>
+)}
+{id === 'rejuran' && (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2L12 3Z" />
+    <circle cx="18.5" cy="5.5" r="1.2" fill="currentColor" stroke="none" />
+  </svg>
+)}
+{id === 'skinbooster' && (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M9.5 5.5c0 0-4 4.8-4 7.7a4 4 0 0 0 8 0c0-2.9-4-7.7-4-7.7Z" />
+    <path d="M16.5 10.5c0 0-2.5 3-2.5 4.8a2.5 2.5 0 0 0 5 0c0-1.8-2.5-4.8-2.5-4.8Z" />
+  </svg>
+)}
+{id === 'pico' && (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M13 3L5.5 13.5h6L10.5 21 18.5 10.5h-6L13 3Z" />
+  </svg>
+)}
+{id === 'inmode' && (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="8" />
+    <circle cx="12" cy="12" r="3.5" />
+    <path d="M12 4v2M12 18v2M4 12h2M18 12h2" />
+  </svg>
+)}
+{id === 'potenza' && (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M7 5v8M12 5v8M17 5v8" />
+    <circle cx="7" cy="16.5" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="16.5" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="17" cy="16.5" r="1.2" fill="currentColor" stroke="none" />
+    <path d="M4.5 9h15" />
+  </svg>
+)}

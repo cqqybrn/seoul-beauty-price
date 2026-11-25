@@ -1,0 +1,10 @@
+{$SITE_DOMAIN} {
+    root * /opt/kbeauty-price/data/site/current
+    encode zstd gzip
+    file_server
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'"
+    }
+}

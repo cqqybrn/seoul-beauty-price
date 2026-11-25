@@ -1,0 +1,10 @@
+dbs:
+  - path: /opt/kbeauty-price/data/kbeauty.sqlite3
+    replicas:
+      - type: s3
+        bucket: ${LITESTREAM_BUCKET}
+        path: kbeauty-price
+        endpoint: ${LITESTREAM_ENDPOINT}
+        region: ${AWS_REGION}
+        access-key-id: ${AWS_ACCESS_KEY_ID}
+        secret-access-key: ${AWS_SECRET_ACCESS_KEY}

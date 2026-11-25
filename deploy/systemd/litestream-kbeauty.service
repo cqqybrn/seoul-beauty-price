@@ -1,0 +1,20 @@
+[Unit]
+Description=Continuous SQLite replication to object storage
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=kbeauty
+Group=kbeauty
+EnvironmentFile=/etc/kbeauty-price.env
+ExecStart=/usr/local/bin/litestream replicate -config /etc/litestream-kbeauty.yml
+Restart=on-failure
+RestartSec=30
+NoNewPrivileges=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/opt/kbeauty-price/data
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

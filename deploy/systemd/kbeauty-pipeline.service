@@ -1,0 +1,26 @@
+[Unit]
+Description=Seoul public price collection and analysis
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=kbeauty
+Group=kbeauty
+WorkingDirectory=/opt/kbeauty-price
+EnvironmentFile=/etc/kbeauty-price.env
+Environment=TZ=Asia/Seoul
+Environment=PYTHONUTF8=1
+ExecStart=/usr/bin/flock -n /opt/kbeauty-price/data/pipeline.lock /opt/kbeauty-price/.venv/bin/pipeline run --live
+TimeoutStartSec=4h
+MemoryMax=8G
+CPUQuota=180%
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/kbeauty-price/data /opt/kbeauty-price/dictionary /opt/kbeauty-price/web/.astro
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

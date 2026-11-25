@@ -1,0 +1,57 @@
+---
+import Base from '../../layouts/Base.astro';
+import OfferCard from '../../components/OfferCard.astro';
+import { catalog, areaName } from '../../data/catalog';
+export function getStaticPaths(){return catalog.clinics.map(c=>({params:{id:String(c.id)},props:{clinic:c}}));}
+const {clinic:c}=Astro.props;
+const clinicOffers = catalog.offers.filter(o => o.clinic_id === c.id);
+---
+<Base title={`${c.name_zh || c.name} · 首尔机构公开活动 · 首尔价研所`}>
+  <div class="shell page-container">
+    <header class="subpage-hero">
+      <div class="breadcrumbs">
+        <a href="/">十项总览</a>
+        <span>/</span>
+        <a href="/activities/">全部活动</a>
+        <span>/</span>
+        <span>机构公开报价</span>
+      </div>
+      <div class="subpage-kicker">CLINIC PROFILE · 首尔医美机构收录页</div>
+      <h1>{c.name_zh || '机构中文参考名整理中'}</h1>
+      <p class="clinic-hero-ko" lang="ko">{c.name} · {c.address}</p>
+
+      <div class="badge-row" style="margin-top: 14px">
+        <span class="district-pill">{areaName(c.address)}</span>
+        <span class:list={['badge', c.registered === true ? 'badge-emerald' : 'badge-subtle']}>
+          {c.registered === true
+            ? '✓ 平台标注：外籍患者接待登记机构'
+            : c.registered === false
+              ? '平台未标外籍患者登记'
+              : '外籍患者接待登记状态待核实'}
+        </span>
+        <span class="badge badge-subtle">共收录 {clinicOffers.length} 条拆解报价</span>
+        <button type="button" class="copy-btn" data-copy={`${c.name}\n${c.address}`}>复制韩文院名与地址</button>
+      </div>
+    </header>
+
+    <div class="notice-banner">
+      <span class="notice-tag">预约核验</span>
+      <span>中文院名仅供阅读参考（非医院官方注册中文名）。外国人是否享同等活动价及最终费用，请直接与医院确认。</span>
+    </div>
+
+    <div class="offer-stack">
+      {clinicOffers.map(o => <OfferCard offer={o} />)}
+    </div>
+
+    <section class="info-card" style="margin-top: 28px">
+      <h2>该机构公开活动原链接（{c.urls.length}）</h2>
+      <div class="link-pills">
+        {c.urls.map((u, i) => (
+          <a href={u} target="_blank" rel="noopener noreferrer" class="btn-outline-sm">
+            查看原站活动 #{i + 1} ↗
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+</Base>

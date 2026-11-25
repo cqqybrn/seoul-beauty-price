@@ -1,0 +1,18 @@
+{
+  "source": "babitalk",
+  "source_event_id": "fixture-1",
+  "url": "https://babitalk.com/events/999999999",
+  "title_raw": "리쥬란 힐러",
+  "clinic_name": "테스트의원",
+  "clinic_address": "서울 강남구 테스트로 123",
+  "source_clinic_id": "fixture-clinic",
+  "clinic_url": "https://babitalk.com/hospitals/999999999",
+  "district": "강남구",
+  "vat": "included",
+  "options": [
+    {"source_option_id":"1", "name_raw":"리쥬란힐러 2cc", "sessions_raw":"1회권",
+     "list_price_krw":200000, "price_krw":159000, "coupon_price_krw":149000},
+    {"source_option_id":"2", "name_raw":"리쥬란힐러 4cc", "sessions_raw":"1회권",
+     "price_krw":299000}
+  ]
+}
